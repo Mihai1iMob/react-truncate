@@ -6,7 +6,8 @@ import sinon from 'sinon';
 import jsdom from 'jsdom';
 import requestAnimationFrame, { cancel as cancelAnimationFrame } from 'raf';
 import React, { Component } from 'react';
-import { render, unmountComponentAtNode } from 'react-dom';
+import { unmountComponentAtNode } from 'react-dom';
+import { createRoot } from 'react-dom/client';
 import { renderToString } from 'react-dom/server';
 import { renderIntoDocument } from 'react-dom/test-utils';
 import ShallowRenderer from 'react-test-renderer/shallow';
@@ -80,7 +81,7 @@ describe('<Truncate />', () => {
     describe('in a client environment', () => {
         before(() => {
             const { JSDOM } = jsdom;
-            const { document } = (new JSDOM('')).window;
+            const { document } = (new JSDOM('', { url: 'https://localhost' })).window;
             global.document = document;
             global.window = global.document.defaultView;
             global.window.requestAnimationFrame = requestAnimationFrame;
@@ -257,27 +258,26 @@ describe('<Truncate />', () => {
 
             it('should update content when new children are passed in', () => {
                 const container = document.createElement('div');
+                const root = createRoot(container);
 
-                const component = render(
+                const component = root.render(
                     <div>
                         <Truncate lines={1}>
                             Some old content here
                         </Truncate>
-                    </div>,
-                    container
+                    </div>
                 );
 
                 expect(component, 'to display text', `
                     Some old conten…
                 `);
 
-                render(
+                root.render(
                     <div>
                         <Truncate lines={1}>
                             Some new content here
                         </Truncate>
-                    </div>,
-                    container
+                    </div>
                 );
 
                 expect(component, 'to display text', `
@@ -316,12 +316,12 @@ describe('<Truncate />', () => {
 
                 it('should render empty text without an error', () => {
                     const container = document.createElement('div');
+                    const root = createRoot(container);
 
-                    const component = render(
+                    const component = root.render(
                         <div>
                             <Truncate lines={1} trimWhitespace />
-                        </div>,
-                        container
+                        </div>
                     );
 
                     expect(component, 'to display text', '');
@@ -329,8 +329,9 @@ describe('<Truncate />', () => {
 
                 it('should truncate whitespace only text without an error', () => {
                     const container = document.createElement('div');
+                    const root = createRoot(container);
 
-                    const component = render(
+                    const component = root.render(
                         <div>
                             <Truncate lines={1} trimWhitespace>
                                 <br />
@@ -339,8 +340,7 @@ describe('<Truncate />', () => {
                                 <br />
                                 <br />
                             </Truncate>
-                        </div>,
-                        container
+                        </div>
                     );
 
                     expect(component, 'to display text', '…');
@@ -452,12 +452,13 @@ describe('<Truncate />', () => {
 
             try {
                 const container = document.createElement('div');
+                const root = createRoot(container);
 
-                render(<Truncate width={100} />, container);
+                root.render(<Truncate width={100} />);
 
                 const numCalled = calcTargetWidth.callCount;
 
-                render(<Truncate width={200} />, container);
+                root.render(<Truncate width={200} />);
 
                 expect(calcTargetWidth, 'was called times', numCalled + 1);
             } finally {
@@ -485,8 +486,9 @@ describe('<Truncate />', () => {
 
             try {
                 const container = document.createElement('div');
+                const root = createRoot(container);
 
-                render(<Truncate />, container);
+                root.render(<Truncate />);
 
                 unmountComponentAtNode(container);
 
